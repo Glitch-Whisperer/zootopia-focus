@@ -111,13 +111,16 @@
 @layer components {
   .glass-panel {
     @apply bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl;
-    box-shadow: var(--shadow-soft);
+    box-shadow: var(--shadow-soft), inset 0 1px 0 hsl(var(--foreground) / 0.05);
   }
 
   .phone-screen {
-    background: var(--gradient-phone);
-    @apply rounded-3xl border-4 border-muted overflow-hidden;
-    box-shadow: var(--shadow-soft), inset 0 1px 0 hsl(230 30% 30% / 0.5);
+    background: linear-gradient(180deg, hsl(230 25% 18%) 0%, hsl(230 20% 14%) 100%);
+    @apply rounded-[2.5rem] border-4 border-muted/80 overflow-hidden;
+    box-shadow: 
+      var(--shadow-soft), 
+      inset 0 1px 0 hsl(230 30% 30% / 0.5),
+      0 0 60px hsl(var(--primary) / 0.2);
   }
 
   .biome-tundra {
@@ -136,16 +139,18 @@
   }
 
   .currency-badge {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm;
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm backdrop-blur-xl;
     font-family: var(--font-display);
   }
 
   .currency-bucks {
     @apply bg-bucks/20 text-bucks border border-bucks/30;
+    box-shadow: 0 0 20px hsl(var(--bucks) / 0.2);
   }
 
   .currency-rank {
     @apply bg-rank/20 text-rank border border-rank/30;
+    box-shadow: 0 0 20px hsl(var(--rank) / 0.2);
   }
 }
 
@@ -167,17 +172,113 @@
   }
 }
 
-/* Animations */
+/* ===== ANIMATIONS ===== */
+
+/* Character idle breathing animation */
+@keyframes character-idle {
+  0%, 100% { 
+    transform: translateY(0px) scale(1); 
+  }
+  50% { 
+    transform: translateY(-8px) scale(1.02); 
+  }
+}
+
+.animate-character-idle {
+  animation: character-idle 3s ease-in-out infinite;
+}
+
+/* Phone opening animation - cinematic style */
+@keyframes phone-open {
+  0% {
+    transform: scale(0.3) rotateY(-30deg) translateY(100px);
+    opacity: 0;
+    filter: blur(10px);
+  }
+  40% {
+    transform: scale(0.8) rotateY(-10deg) translateY(20px);
+    opacity: 0.7;
+    filter: blur(2px);
+  }
+  70% {
+    transform: scale(1.05) rotateY(5deg) translateY(-10px);
+    opacity: 1;
+    filter: blur(0px);
+  }
+  100% {
+    transform: scale(1) rotateY(0deg) translateY(0px);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+@keyframes phone-close {
+  0% {
+    transform: scale(1) rotateY(0deg) translateY(0px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.3) rotateY(30deg) translateY(100px);
+    opacity: 0;
+    filter: blur(10px);
+  }
+}
+
+.animate-phone-open {
+  animation: phone-open 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-phone-close {
+  animation: phone-close 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Train panorama scroll */
+@keyframes train-panorama {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-66.67%);
+  }
+}
+
+/* Train loading dots */
+@keyframes train-dots {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+}
+
+.animate-train-dots {
+  animation: train-dots 1.5s ease-in-out infinite;
+}
+
+/* Float animation */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
 }
 
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Pulse glow */
 @keyframes pulse-glow {
   0%, 100% { opacity: 0.5; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.05); }
 }
 
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Particle animations */
 @keyframes snow-fall {
   0% { transform: translateY(-10px) rotate(0deg); opacity: 0; }
   10% { opacity: 1; }
@@ -195,44 +296,6 @@
   50% { transform: translateX(5px) scaleY(1.02); }
 }
 
-@keyframes slide-up {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes slide-down {
-  from { transform: translateY(-20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes scale-in {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-@keyframes train-move {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100vw); }
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
 .animate-snow {
   animation: snow-fall 8s linear infinite;
 }
@@ -245,20 +308,49 @@
   animation: heat-wave 2s ease-in-out infinite;
 }
 
+/* Slide animations */
+@keyframes slide-up {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slide-down {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
 .animate-slide-up {
-  animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-slide-down {
   animation: slide-down 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Fade in */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .animate-fade-in {
-  animation: fade-in 0.3s ease-out;
+  animation: fade-in 0.4s ease-out;
+}
+
+/* Scale in */
+@keyframes scale-in {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 .animate-scale-in {
   animation: scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Shimmer effect */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 .animate-shimmer {
@@ -267,11 +359,17 @@
   animation: shimmer 2s infinite;
 }
 
+/* Train move */
+@keyframes train-move {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100vw); }
+}
+
 .animate-train {
   animation: train-move 4s linear;
 }
 
-/* Scrollbar Styling */
+/* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
