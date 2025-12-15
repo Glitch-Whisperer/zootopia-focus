@@ -1,36 +1,44 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { TimerState, BiomeType } from '@/types/game';
-import { Snowflake, TreePine, Sun, Home, AlertTriangle } from 'lucide-react';
+import { Snowflake, TreePine, Sun, Home, Pause, Play, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SessionAlert } from './SessionAlert';
+import tundraBg from '@/assets/biome-tundra-bg.png';
+import rainforestBg from '@/assets/biome-rainforest-bg.png';
+import saharaBg from '@/assets/biome-sahara-bg.png';
 
 interface BiomeTimerProps {
   timer: TimerState;
-  onAbandon: () => void;
+  onPause: () => void;
+  onResume: () => void;
+  onReset: () => void;
   onGoHome: () => void;
 }
 
-const biomeConfig: Record<BiomeType, { icon: typeof Snowflake; name: string; colorClass: string; bgClass: string }> = {
+const biomeConfig: Record<BiomeType, { icon: typeof Snowflake; name: string; colorClass: string; bgImage: string }> = {
   tundra: { 
     icon: Snowflake, 
     name: 'Tundratown', 
     colorClass: 'text-tundra',
-    bgClass: 'biome-tundra'
+    bgImage: tundraBg,
   },
   rainforest: { 
     icon: TreePine, 
     name: 'Rainforest District', 
     colorClass: 'text-rainforest',
-    bgClass: 'biome-rainforest'
+    bgImage: rainforestBg,
   },
   sahara: { 
     icon: Sun, 
     name: 'Sahara Square', 
     colorClass: 'text-sahara',
-    bgClass: 'biome-sahara'
+    bgImage: saharaBg,
   },
 };
 
-export function BiomeTimer({ timer, onAbandon, onGoHome }: BiomeTimerProps) {
+export function BiomeTimer({ timer, onPause, onResume, onReset, onGoHome }: BiomeTimerProps) {
+  const [showAlert, setShowAlert] = useState(false);
+  
   const biome = timer.biome || 'tundra';
   const config = biomeConfig[biome];
   const Icon = config.icon;
@@ -43,7 +51,8 @@ export function BiomeTimer({ timer, onAbandon, onGoHome }: BiomeTimerProps) {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, [timer.timeRemaining]);
 
-  const isComplete = timer.timeRemaining === 0 && !timer.isActive;
+  const isComplete = timer.timeRemaining === 0;
+  const isPaused = !timer.isActive && timer.timeRemaining > 0;
 
   // Generate particles based on biome
   const particles = useMemo(() => {
@@ -56,8 +65,30 @@ export function BiomeTimer({ timer, onAbandon, onGoHome }: BiomeTimerProps) {
     }));
   }, [biome]);
 
+  const handleHomeClick = () => {
+    if (!isComplete) {
+      setShowAlert(true);
+    } else {
+      onGoHome();
+    }
+  };
+
+  const handleConfirmLeave = () => {
+    setShowAlert(false);
+    onGoHome();
+  };
+
   return (
-    <div className={`min-h-screen flex flex-col ${config.bgClass} relative overflow-hidden`}>
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000"
+        style={{ backgroundImage: `url(${config.bgImage})` }}
+      />
+      
+      {/* Gradient Overlay */}
+      <div className={`absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent`} />
+      
       {/* Particle Effects */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {particles.map(p => (
@@ -81,15 +112,15 @@ export function BiomeTimer({ timer, onAbandon, onGoHome }: BiomeTimerProps) {
       <header className="relative z-10 p-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Icon className={`w-8 h-8 ${config.colorClass}`} />
-          <h1 className={`font-display text-2xl ${config.colorClass} text-glow-${biome}`}>
+          <h1 className={`font-display text-2xl ${config.colorClass}`}>
             {config.name}
           </h1>
         </div>
         <Button 
           variant="ghost" 
           size="icon"
-          onClick={onGoHome}
-          className="text-foreground/60 hover:text-foreground"
+          onClick={handleHomeClick}
+          className="text-foreground/60 hover:text-foreground glass-panel"
         >
           <Home className="w-5 h-5" />
         </Button>
@@ -125,11 +156,11 @@ export function BiomeTimer({ timer, onAbandon, onGoHome }: BiomeTimerProps) {
           
           {/* Time Display */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className={`font-display text-6xl ${config.colorClass} text-glow-${biome}`}>
+            <span className={`font-display text-6xl ${config.colorClass}`}>
               {timeDisplay}
             </span>
             <span className="text-muted-foreground text-sm mt-2">
-              {isComplete ? 'Complete!' : 'Focus Time'}
+              {isComplete ? 'Complete!' : isPaused ? 'Paused' : 'Focus Time'}
             </span>
           </div>
         </div>
@@ -137,7 +168,7 @@ export function BiomeTimer({ timer, onAbandon, onGoHome }: BiomeTimerProps) {
         {/* Biome-specific mechanic hint */}
         <div className="mt-8 glass-panel p-4 max-w-xs text-center">
           <p className="text-sm text-muted-foreground">
-            {biome === 'tundra' && "❄️ The Freeze: Don't exit or the ice cracks!"}
+            {biome === 'tundra' && "❄️ The Freeze: Stay focused in the cold!"}
             {biome === 'rainforest' && "🌿 Riding the gondola through the mist..."}
             {biome === 'sahara' && "☀️ The heat is rising, stay focused!"}
           </p>
@@ -155,16 +186,42 @@ export function BiomeTimer({ timer, onAbandon, onGoHome }: BiomeTimerProps) {
             Return Home 🏠
           </Button>
         ) : (
-          <Button 
-            onClick={onAbandon}
-            variant="destructive"
-            className="w-full font-display"
-          >
-            <AlertTriangle className="w-4 h-4 mr-2" />
-            Abandon Session
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={isPaused ? onResume : onPause}
+              variant="outline"
+              className="flex-1 font-display py-6 glass-panel border-border/50"
+            >
+              {isPaused ? (
+                <>
+                  <Play className="w-5 h-5 mr-2" />
+                  Resume
+                </>
+              ) : (
+                <>
+                  <Pause className="w-5 h-5 mr-2" />
+                  Pause
+                </>
+              )}
+            </Button>
+            <Button 
+              onClick={onReset}
+              variant="outline"
+              className="font-display py-6 glass-panel border-border/50"
+            >
+              <RotateCcw className="w-5 h-5" />
+            </Button>
+          </div>
         )}
       </footer>
+
+      {/* Session Alert */}
+      <SessionAlert 
+        isOpen={showAlert}
+        onConfirm={handleConfirmLeave}
+        onCancel={() => setShowAlert(false)}
+        mode="citizen"
+      />
     </div>
   );
 }

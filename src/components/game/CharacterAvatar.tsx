@@ -35,7 +35,7 @@ export function CharacterAvatar({ character, size = 'md', className = '', animat
       {/* Character glow effect */}
       <div className="absolute inset-0 bg-gradient-to-t from-accent/30 via-primary/20 to-transparent blur-3xl rounded-full scale-110" />
       
-      {/* Character image */}
+      {/* Character image with background removal */}
       <div className={`relative ${animate ? 'animate-character-idle' : ''}`}>
         <img 
           src={characterImages[character]} 
@@ -43,6 +43,10 @@ export function CharacterAvatar({ character, size = 'md', className = '', animat
           className={`${sizeClasses[size]} object-contain`}
           style={{ 
             filter: 'drop-shadow(0 10px 40px rgba(0,0,0,0.6))',
+            mixBlendMode: 'normal',
+            // Remove white background
+            WebkitMaskImage: 'linear-gradient(to bottom, black, black)',
+            maskImage: 'linear-gradient(to bottom, black, black)',
           }}
         />
       </div>

@@ -1,8 +1,8 @@
+import { useState, useEffect, useRef } from 'react';
 import { CharacterAvatar } from './CharacterAvatar';
 import { CurrencyDisplay } from './CurrencyDisplay';
 import { PlayerStats, CharacterType, RANK_LABELS } from '@/types/game';
 import { Smartphone, Clock, TrendingUp, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import apartmentBg from '@/assets/apartment-bg.png';
 
 interface ApartmentViewProps {
@@ -21,6 +21,17 @@ const apartmentLevels = [
 
 export function ApartmentView({ stats, character, onOpenPhone }: ApartmentViewProps) {
   const apartment = apartmentLevels[stats.apartmentLevel - 1] || apartmentLevels[0];
+  const [isPhoneAnimating, setIsPhoneAnimating] = useState(false);
+  const characterRef = useRef<HTMLDivElement>(null);
+
+  const handleOpenPhone = () => {
+    setIsPhoneAnimating(true);
+    // Wait for character animation to start lifting phone
+    setTimeout(() => {
+      onOpenPhone();
+      setIsPhoneAnimating(false);
+    }, 400);
+  };
   
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
@@ -57,8 +68,33 @@ export function ApartmentView({ stats, character, onOpenPhone }: ApartmentViewPr
 
       {/* Main Content - Character */}
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center p-6">
-        {/* Character */}
-        <CharacterAvatar character={character} size="xl" />
+        {/* Branding */}
+        <div className="text-center mb-6 animate-fade-in">
+          <h1 className="font-display text-4xl md:text-5xl text-foreground mb-2 tracking-tight">
+            FocusHabitat
+          </h1>
+          <p className="text-muted-foreground italic text-sm md:text-base">
+            "It's called a hustle, sweetheart."
+          </p>
+        </div>
+
+        {/* Character with phone animation */}
+        <div ref={characterRef} className={`relative ${isPhoneAnimating ? 'phone-lift-animation' : ''}`}>
+          <CharacterAvatar character={character} size="xl" />
+          
+          {/* Phone icon floating near character */}
+          <button
+            onClick={handleOpenPhone}
+            className={`absolute bottom-4 right-0 group transition-all duration-300 ${
+              isPhoneAnimating ? 'scale-125 -translate-y-8' : 'hover:scale-110'
+            }`}
+          >
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-card/90 to-card/70 border border-border/50 backdrop-blur-xl shadow-lg flex items-center justify-center group-hover:shadow-primary/20 group-hover:border-primary/30 transition-all">
+              <Smartphone className="w-6 h-6 text-primary" />
+            </div>
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse" />
+          </button>
+        </div>
 
         {/* Quick Stats */}
         <div className="mt-8 flex gap-4 flex-wrap justify-center">
@@ -89,20 +125,6 @@ export function ApartmentView({ stats, character, onOpenPhone }: ApartmentViewPr
           </div>
         </div>
       </main>
-
-      {/* Phone Button */}
-      <footer className="relative z-10 p-6">
-        <Button 
-          onClick={onOpenPhone}
-          className="w-full py-7 font-display text-lg gap-3 bg-gradient-to-r from-card/90 to-card/70 hover:from-card hover:to-card/80 border border-border/50 backdrop-blur-xl shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all"
-          variant="outline"
-        >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
-            <Smartphone className="w-5 h-5 text-primary" />
-          </div>
-          <span>Open Phone</span>
-        </Button>
-      </footer>
     </div>
   );
 }
