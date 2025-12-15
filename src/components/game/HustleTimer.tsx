@@ -1,15 +1,20 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { TimerState } from '@/types/game';
-import { DollarSign, Home, AlertTriangle, Flame } from 'lucide-react';
+import { DollarSign, Home, Flame, Pause, Play, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SessionAlert } from './SessionAlert';
 
 interface HustleTimerProps {
   timer: TimerState;
-  onAbandon: () => void;
+  onPause: () => void;
+  onResume: () => void;
+  onReset: () => void;
   onGoHome: () => void;
 }
 
-export function HustleTimer({ timer, onAbandon, onGoHome }: HustleTimerProps) {
+export function HustleTimer({ timer, onPause, onResume, onReset, onGoHome }: HustleTimerProps) {
+  const [showAlert, setShowAlert] = useState(false);
+  
   const progress = ((timer.totalTime - timer.timeRemaining) / timer.totalTime) * 100;
   
   const timeDisplay = useMemo(() => {
@@ -18,10 +23,24 @@ export function HustleTimer({ timer, onAbandon, onGoHome }: HustleTimerProps) {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, [timer.timeRemaining]);
 
-  const isComplete = timer.timeRemaining === 0 && !timer.isActive;
+  const isComplete = timer.timeRemaining === 0;
+  const isPaused = !timer.isActive && timer.timeRemaining > 0;
+
+  const handleHomeClick = () => {
+    if (!isComplete) {
+      setShowAlert(true);
+    } else {
+      onGoHome();
+    }
+  };
+
+  const handleConfirmLeave = () => {
+    setShowAlert(false);
+    onGoHome();
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-bucks/20 to-background relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-bucks/20 via-background to-background relative overflow-hidden">
       {/* Money Rain Effect */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {Array.from({ length: 15 }).map((_, i) => (
@@ -55,8 +74,8 @@ export function HustleTimer({ timer, onAbandon, onGoHome }: HustleTimerProps) {
         <Button 
           variant="ghost" 
           size="icon"
-          onClick={onGoHome}
-          className="text-foreground/60 hover:text-foreground"
+          onClick={handleHomeClick}
+          className="text-foreground/60 hover:text-foreground glass-panel"
         >
           <Home className="w-5 h-5" />
         </Button>
@@ -81,7 +100,9 @@ export function HustleTimer({ timer, onAbandon, onGoHome }: HustleTimerProps) {
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center p-6">
         <div className="relative">
           {/* Danger Ring */}
-          <div className="absolute inset-0 rounded-full border-4 border-destructive/30 animate-pulse" />
+          {!isComplete && !isPaused && (
+            <div className="absolute inset-0 rounded-full border-4 border-destructive/30 animate-pulse" />
+          )}
           
           <svg className="w-64 h-64 -rotate-90" viewBox="0 0 100 100">
             <circle
@@ -114,7 +135,7 @@ export function HustleTimer({ timer, onAbandon, onGoHome }: HustleTimerProps) {
               {timeDisplay}
             </span>
             <span className="text-muted-foreground text-sm mt-2">
-              {isComplete ? 'YOU WIN!' : 'Stay focused!'}
+              {isComplete ? 'YOU WIN!' : isPaused ? 'Paused' : 'Stay focused!'}
             </span>
           </div>
         </div>
@@ -122,9 +143,8 @@ export function HustleTimer({ timer, onAbandon, onGoHome }: HustleTimerProps) {
         {/* Warning */}
         {!isComplete && (
           <div className="mt-8 bg-destructive/20 border border-destructive/30 rounded-xl p-4 max-w-xs text-center">
-            <AlertTriangle className="w-6 h-6 text-destructive mx-auto mb-2" />
             <p className="text-sm text-destructive">
-              Exit now and lose 500 Bucks!
+              ⚠️ Exit now and lose 500 Bucks!
             </p>
           </div>
         )}
@@ -140,16 +160,42 @@ export function HustleTimer({ timer, onAbandon, onGoHome }: HustleTimerProps) {
             Collect 1,000 Bucks! 💰
           </Button>
         ) : (
-          <Button 
-            onClick={onAbandon}
-            variant="destructive"
-            className="w-full font-display"
-          >
-            <AlertTriangle className="w-4 h-4 mr-2" />
-            Give Up (-500 Bucks)
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={isPaused ? onResume : onPause}
+              variant="outline"
+              className="flex-1 font-display py-6 glass-panel border-border/50"
+            >
+              {isPaused ? (
+                <>
+                  <Play className="w-5 h-5 mr-2" />
+                  Resume
+                </>
+              ) : (
+                <>
+                  <Pause className="w-5 h-5 mr-2" />
+                  Pause
+                </>
+              )}
+            </Button>
+            <Button 
+              onClick={onReset}
+              variant="outline"
+              className="font-display py-6 glass-panel border-border/50"
+            >
+              <RotateCcw className="w-5 h-5" />
+            </Button>
+          </div>
         )}
       </footer>
+
+      {/* Session Alert */}
+      <SessionAlert 
+        isOpen={showAlert}
+        onConfirm={handleConfirmLeave}
+        onCancel={() => setShowAlert(false)}
+        mode="hustle"
+      />
     </div>
   );
 }

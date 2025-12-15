@@ -5,7 +5,6 @@ import {
   GameMode, 
   BiomeType, 
   ZPDStage,
-  RankType,
   RANK_ORDER 
 } from '@/types/game';
 
@@ -30,6 +29,11 @@ export function useGameState() {
     return saved ? JSON.parse(saved) : DEFAULT_STATS;
   });
 
+  const [ownedFurniture, setOwnedFurniture] = useState<string[]>(() => {
+    const saved = localStorage.getItem('metrofocus-furniture');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [timer, setTimer] = useState<TimerState>(DEFAULT_TIMER);
   const [currentMode, setCurrentMode] = useState<GameMode>('home');
   const [showPhone, setShowPhone] = useState(false);
@@ -38,6 +42,11 @@ export function useGameState() {
   useEffect(() => {
     localStorage.setItem('metrofocus-stats', JSON.stringify(stats));
   }, [stats]);
+
+  // Save furniture to localStorage
+  useEffect(() => {
+    localStorage.setItem('metrofocus-furniture', JSON.stringify(ownedFurniture));
+  }, [ownedFurniture]);
 
   // Timer countdown
   useEffect(() => {
@@ -149,6 +158,22 @@ export function useGameState() {
     return true;
   }, [stats.bucks]);
 
+  const pauseTimer = useCallback(() => {
+    setTimer(prev => ({ ...prev, isActive: false }));
+  }, []);
+
+  const resumeTimer = useCallback(() => {
+    setTimer(prev => ({ ...prev, isActive: true }));
+  }, []);
+
+  const resetTimer = useCallback(() => {
+    setTimer(prev => ({ 
+      ...prev, 
+      isActive: true,
+      timeRemaining: prev.totalTime 
+    }));
+  }, []);
+
   const abandonSession = useCallback(() => {
     if (timer.mode === 'hustle') {
       // Lose all bet Bucks (already deducted)
@@ -158,12 +183,9 @@ export function useGameState() {
   }, [timer.mode]);
 
   const goHome = useCallback(() => {
-    if (timer.isActive) {
-      abandonSession();
-    } else {
-      setCurrentMode('home');
-    }
-  }, [timer.isActive, abandonSession]);
+    setTimer(DEFAULT_TIMER);
+    setCurrentMode('home');
+  }, []);
 
   const earnBucks = useCallback((amount: number) => {
     setStats(prev => ({ ...prev, bucks: prev.bucks + amount }));
@@ -177,19 +199,38 @@ export function useGameState() {
     return false;
   }, [stats.bucks]);
 
+  const purchaseFurniture = useCallback((item: { id: string; cost: number }) => {
+    if (stats.bucks >= item.cost && !ownedFurniture.includes(item.id)) {
+      setStats(prev => ({ ...prev, bucks: prev.bucks - item.cost }));
+      setOwnedFurniture(prev => [...prev, item.id]);
+      
+      // Check for apartment upgrade
+      if (item.id === 'penthouse-key') {
+        setStats(prev => ({ ...prev, apartmentLevel: 5 }));
+      }
+      return true;
+    }
+    return false;
+  }, [stats.bucks, ownedFurniture]);
+
   return {
     stats,
     timer,
     currentMode,
     showPhone,
+    ownedFurniture,
     setShowPhone,
     startCitizenMode,
     startZPDMode,
     advanceZPDStage,
     startHustleMode,
+    pauseTimer,
+    resumeTimer,
+    resetTimer,
     abandonSession,
     goHome,
     earnBucks,
     spendBucks,
+    purchaseFurniture,
   };
 }

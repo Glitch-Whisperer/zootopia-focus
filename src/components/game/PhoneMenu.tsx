@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Map, Radio, Wallet, X, Snowflake, TreePine, Sun, Target, Clock, Smartphone } from 'lucide-react';
+import { Map, Radio, Wallet, X, Snowflake, TreePine, Sun, Target, Clock, ShoppingBag } from 'lucide-react';
 import { BiomeType, PlayerStats } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import phoneDevice from '@/assets/phone-device.png';
@@ -10,6 +10,7 @@ interface PhoneMenuProps {
   onStartCitizen: (biome: BiomeType, minutes: number) => void;
   onStartZPD: () => void;
   onStartHustle: () => boolean;
+  onOpenShop: () => void;
   stats: PlayerStats;
 }
 
@@ -23,9 +24,10 @@ const biomeData: { type: BiomeType; name: string; icon: typeof Snowflake; color:
 
 const timeOptions = [15, 25, 45, 60];
 
-export function PhoneMenu({ isOpen, onClose, onStartCitizen, onStartZPD, onStartHustle, stats }: PhoneMenuProps) {
+export function PhoneMenu({ isOpen, onClose, onStartCitizen, onStartZPD, onStartHustle, onOpenShop, stats }: PhoneMenuProps) {
   const [currentApp, setCurrentApp] = useState<PhoneApp>('main');
   const [selectedBiome, setSelectedBiome] = useState<BiomeType | null>(null);
+  const [customTime, setCustomTime] = useState('');
   const [animationPhase, setAnimationPhase] = useState<'closed' | 'opening' | 'open' | 'closing'>('closed');
 
   useEffect(() => {
@@ -55,6 +57,16 @@ export function PhoneMenu({ isOpen, onClose, onStartCitizen, onStartZPD, onStart
       onStartCitizen(selectedBiome, minutes);
       setCurrentApp('main');
       setSelectedBiome(null);
+    }
+  };
+
+  const handleCustomTimeSubmit = () => {
+    const mins = parseInt(customTime);
+    if (selectedBiome && mins > 0 && mins <= 180) {
+      onStartCitizen(selectedBiome, mins);
+      setCurrentApp('main');
+      setSelectedBiome(null);
+      setCustomTime('');
     }
   };
 
@@ -109,6 +121,19 @@ export function PhoneMenu({ isOpen, onClose, onStartCitizen, onStartZPD, onStart
           <div className="text-sm text-muted-foreground">The Hustle</div>
         </div>
       </button>
+
+      <button 
+        onClick={() => { handleClose(); setTimeout(onOpenShop, 600); }}
+        className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-accent/20 to-accent/10 hover:from-accent/30 hover:to-accent/20 transition-all group border border-accent/20"
+      >
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent/40 to-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-accent/20">
+          <ShoppingBag className="w-6 h-6 text-accent" />
+        </div>
+        <div className="text-left">
+          <div className="font-display text-lg text-foreground">Shop</div>
+          <div className="text-sm text-muted-foreground">Buy Furniture</div>
+        </div>
+      </button>
     </div>
   );
 
@@ -145,18 +170,43 @@ export function PhoneMenu({ isOpen, onClose, onStartCitizen, onStartZPD, onStart
           </button>
         ))
       ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {timeOptions.map(mins => (
-            <button
-              key={mins}
-              onClick={() => handleTimeSelect(mins)}
-              className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-gradient-to-b from-muted to-muted/50 hover:from-muted/80 hover:to-muted/30 transition-all group border border-border/50"
-            >
-              <Clock className="w-6 h-6 text-foreground group-hover:scale-110 transition-transform" />
-              <span className="font-display text-2xl text-foreground">{mins}</span>
-              <span className="text-xs text-muted-foreground">minutes</span>
-            </button>
-          ))}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            {timeOptions.map(mins => (
+              <button
+                key={mins}
+                onClick={() => handleTimeSelect(mins)}
+                className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-gradient-to-b from-muted to-muted/50 hover:from-muted/80 hover:to-muted/30 transition-all group border border-border/50"
+              >
+                <Clock className="w-6 h-6 text-foreground group-hover:scale-110 transition-transform" />
+                <span className="font-display text-2xl text-foreground">{mins}</span>
+                <span className="text-xs text-muted-foreground">minutes</span>
+              </button>
+            ))}
+          </div>
+          
+          {/* Custom Timer */}
+          <div className="glass-panel p-4 space-y-3">
+            <div className="text-sm text-muted-foreground text-center">Custom Duration</div>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={customTime}
+                onChange={(e) => setCustomTime(e.target.value)}
+                placeholder="1-180"
+                min="1"
+                max="180"
+                className="flex-1 bg-muted/50 border border-border/50 rounded-xl px-4 py-3 text-center font-display text-lg focus:outline-none focus:border-primary/50"
+              />
+              <Button
+                onClick={handleCustomTimeSubmit}
+                disabled={!customTime || parseInt(customTime) <= 0 || parseInt(customTime) > 180}
+                className="font-display"
+              >
+                Go
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -270,7 +320,7 @@ export function PhoneMenu({ isOpen, onClose, onStartCitizen, onStartZPD, onStart
             </div>
             
             {/* Phone Content */}
-            <div className="relative min-h-[400px] bg-gradient-to-b from-card via-card/95 to-card">
+            <div className="relative min-h-[400px] bg-gradient-to-b from-card via-card/95 to-card overflow-y-auto max-h-[500px]">
               {/* Close Button */}
               <button 
                 onClick={handleClose}

@@ -1,11 +1,14 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { TimerState, ZPDStage } from '@/types/game';
-import { Search, Car, Lock, Home, AlertTriangle, ChevronRight } from 'lucide-react';
+import { Search, Car, Lock, Home, ChevronRight, Pause, Play, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SessionAlert } from './SessionAlert';
 
 interface ZPDTimerProps {
   timer: TimerState;
-  onAbandon: () => void;
+  onPause: () => void;
+  onResume: () => void;
+  onReset: () => void;
   onGoHome: () => void;
   onAdvanceStage: () => void;
 }
@@ -33,7 +36,9 @@ const stageConfig: Record<ZPDStage, { icon: typeof Search; name: string; descrip
 
 const stageOrder: ZPDStage[] = ['clues', 'chase', 'arrest'];
 
-export function ZPDTimer({ timer, onAbandon, onGoHome, onAdvanceStage }: ZPDTimerProps) {
+export function ZPDTimer({ timer, onPause, onResume, onReset, onGoHome, onAdvanceStage }: ZPDTimerProps) {
+  const [showAlert, setShowAlert] = useState(false);
+  
   const stage = timer.zpdStage || 'clues';
   const config = stageConfig[stage];
   const Icon = config.icon;
@@ -47,11 +52,25 @@ export function ZPDTimer({ timer, onAbandon, onGoHome, onAdvanceStage }: ZPDTime
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }, [timer.timeRemaining]);
 
-  const isStageComplete = timer.timeRemaining === 0 && !timer.isActive;
+  const isStageComplete = timer.timeRemaining === 0;
   const isAllComplete = isStageComplete && stage === 'arrest';
+  const isPaused = !timer.isActive && timer.timeRemaining > 0;
+
+  const handleHomeClick = () => {
+    if (!isAllComplete && timer.timeRemaining > 0) {
+      setShowAlert(true);
+    } else {
+      onGoHome();
+    }
+  };
+
+  const handleConfirmLeave = () => {
+    setShowAlert(false);
+    onGoHome();
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-primary/20 to-background relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-primary/20 via-background to-background relative overflow-hidden">
       {/* Police Lights Effect */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-0 w-1/2 h-2 bg-primary/30 animate-pulse" />
@@ -74,8 +93,8 @@ export function ZPDTimer({ timer, onAbandon, onGoHome, onAdvanceStage }: ZPDTime
         <Button 
           variant="ghost" 
           size="icon"
-          onClick={onGoHome}
-          className="text-foreground/60 hover:text-foreground"
+          onClick={handleHomeClick}
+          className="text-foreground/60 hover:text-foreground glass-panel"
         >
           <Home className="w-5 h-5" />
         </Button>
@@ -144,7 +163,7 @@ export function ZPDTimer({ timer, onAbandon, onGoHome, onAdvanceStage }: ZPDTime
                 {timeDisplay}
               </span>
               <span className="text-muted-foreground text-sm mt-2">
-                Stage {currentStageIndex + 1} of 3
+                {isPaused ? 'Paused' : `Stage ${currentStageIndex + 1} of 3`}
               </span>
             </div>
           </div>
@@ -177,16 +196,42 @@ export function ZPDTimer({ timer, onAbandon, onGoHome, onAdvanceStage }: ZPDTime
             Next Stage <ChevronRight className="w-5 h-5 ml-2" />
           </Button>
         ) : (
-          <Button 
-            onClick={onAbandon}
-            variant="destructive"
-            className="w-full font-display"
-          >
-            <AlertTriangle className="w-4 h-4 mr-2" />
-            Abandon Case (Suspect Escapes!)
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={isPaused ? onResume : onPause}
+              variant="outline"
+              className="flex-1 font-display py-6 glass-panel border-border/50"
+            >
+              {isPaused ? (
+                <>
+                  <Play className="w-5 h-5 mr-2" />
+                  Resume
+                </>
+              ) : (
+                <>
+                  <Pause className="w-5 h-5 mr-2" />
+                  Pause
+                </>
+              )}
+            </Button>
+            <Button 
+              onClick={onReset}
+              variant="outline"
+              className="font-display py-6 glass-panel border-border/50"
+            >
+              <RotateCcw className="w-5 h-5" />
+            </Button>
+          </div>
         )}
       </footer>
+
+      {/* Session Alert */}
+      <SessionAlert 
+        isOpen={showAlert}
+        onConfirm={handleConfirmLeave}
+        onCancel={() => setShowAlert(false)}
+        mode="zpd"
+      />
     </div>
   );
 }

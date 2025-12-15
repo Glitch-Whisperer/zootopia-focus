@@ -6,6 +6,7 @@ import { BiomeTimer } from '@/components/game/BiomeTimer';
 import { ZPDTimer } from '@/components/game/ZPDTimer';
 import { HustleTimer } from '@/components/game/HustleTimer';
 import { TrainTransition } from '@/components/game/TrainTransition';
+import { FurnitureShop } from '@/components/game/FurnitureShop';
 import { CharacterType, BiomeType } from '@/types/game';
 
 const Index = () => {
@@ -13,19 +14,24 @@ const Index = () => {
   const [showTrainTransition, setShowTrainTransition] = useState(false);
   const [trainDestination, setTrainDestination] = useState<BiomeType | 'home'>('home');
   const [pendingCitizenMode, setPendingCitizenMode] = useState<{ biome: BiomeType; minutes: number } | null>(null);
+  const [showShop, setShowShop] = useState(false);
   
   const {
     stats,
     timer,
     currentMode,
     showPhone,
+    ownedFurniture,
     setShowPhone,
     startCitizenMode,
     startZPDMode,
     advanceZPDStage,
     startHustleMode,
-    abandonSession,
+    pauseTimer,
+    resumeTimer,
+    resetTimer,
     goHome,
+    purchaseFurniture,
   } = useGameState();
 
   // Handle citizen mode with train transition
@@ -47,15 +53,6 @@ const Index = () => {
 
   // Handle going home with train transition
   const handleGoHome = useCallback(() => {
-    if (timer.isActive) {
-      abandonSession();
-    } else {
-      setTrainDestination('home');
-      setShowTrainTransition(true);
-    }
-  }, [timer.isActive, abandonSession]);
-
-  const handleGoHomeFromTimer = useCallback(() => {
     setTrainDestination('home');
     setShowTrainTransition(true);
   }, []);
@@ -64,6 +61,11 @@ const Index = () => {
     setShowTrainTransition(false);
     goHome();
   }, [goHome]);
+
+  const handleOpenShop = useCallback(() => {
+    setShowPhone(false);
+    setShowShop(true);
+  }, [setShowPhone]);
 
   // Train transition overlay
   if (showTrainTransition) {
@@ -77,33 +79,39 @@ const Index = () => {
   }
 
   // Render based on current mode
-  if (currentMode === 'citizen' && timer.isActive) {
+  if (currentMode === 'citizen' && (timer.isActive || timer.timeRemaining > 0 || timer.timeRemaining === 0)) {
     return (
       <BiomeTimer 
         timer={timer} 
-        onAbandon={abandonSession} 
-        onGoHome={handleGoHomeFromTimer}
+        onPause={pauseTimer}
+        onResume={resumeTimer}
+        onReset={resetTimer}
+        onGoHome={handleGoHome}
       />
     );
   }
 
-  if (currentMode === 'zpd' && (timer.isActive || timer.timeRemaining === 0)) {
+  if (currentMode === 'zpd' && (timer.isActive || timer.timeRemaining >= 0)) {
     return (
       <ZPDTimer 
         timer={timer} 
-        onAbandon={abandonSession} 
-        onGoHome={handleGoHomeFromTimer}
+        onPause={pauseTimer}
+        onResume={resumeTimer}
+        onReset={resetTimer}
+        onGoHome={handleGoHome}
         onAdvanceStage={advanceZPDStage}
       />
     );
   }
 
-  if (currentMode === 'hustle' && (timer.isActive || timer.timeRemaining === 0)) {
+  if (currentMode === 'hustle' && (timer.isActive || timer.timeRemaining >= 0)) {
     return (
       <HustleTimer 
         timer={timer} 
-        onAbandon={abandonSession} 
-        onGoHome={handleGoHomeFromTimer}
+        onPause={pauseTimer}
+        onResume={resumeTimer}
+        onReset={resetTimer}
+        onGoHome={handleGoHome}
       />
     );
   }
@@ -122,7 +130,15 @@ const Index = () => {
         onStartCitizen={handleStartCitizen}
         onStartZPD={startZPDMode}
         onStartHustle={startHustleMode}
+        onOpenShop={handleOpenShop}
         stats={stats}
+      />
+      <FurnitureShop
+        isOpen={showShop}
+        onClose={() => setShowShop(false)}
+        stats={stats}
+        onPurchase={purchaseFurniture}
+        ownedItems={ownedFurniture}
       />
     </>
   );
