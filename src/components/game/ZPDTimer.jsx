@@ -4,7 +4,7 @@ import { Search, Car, Lock, Home, ChevronRight, Pause, Play, RotateCcw } from 'l
 import { Button } from '@/components/ui/button';
 import { SessionAlert } from './SessionAlert';
 
-const stageConfig: Record<ZPDStage, { icon: typeof Search; name: string; description: string; color: string }> = {
+const stageConfig = {
   clues: { 
     icon: Search, 
     name: 'Gather Clues', 

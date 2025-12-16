@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import trainPanorama from '@/assets/train-panorama.png';
 
-const destinationLabels: Record<BiomeType | 'home', string> = {
+const destinationLabels = {
   home: 'Grand Pangolin Arms',
   tundra: 'Tundratown',
   rainforest: 'Rainforest District',

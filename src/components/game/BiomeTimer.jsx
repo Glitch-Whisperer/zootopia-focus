@@ -7,7 +7,7 @@ import tundraBg from '@/assets/biome-tundra-bg.png';
 import rainforestBg from '@/assets/biome-rainforest-bg.png';
 import saharaBg from '@/assets/biome-sahara-bg.png';
 
-const biomeConfig: Record<BiomeType, { icon: typeof Snowflake; name: string; colorClass: string; bgImage: string }> = {
+const biomeConfig = {
   tundra: { 
     icon: Snowflake, 
     name: 'Tundratown', 
