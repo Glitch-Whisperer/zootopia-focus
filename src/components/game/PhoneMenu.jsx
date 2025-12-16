@@ -4,8 +4,6 @@ import { Map, Radio, Wallet, X, Snowflake, TreePine, Sun, Target, Clock, Shoppin
 import { Button } from '@/components/ui/button';
 import phoneDevice from '@/assets/phone-device.png';
 
-type PhoneApp = 'main' | 'maps' | 'dispatch' | 'zpay';
-
 const biomeData: { type; name: string; icon: typeof Snowflake; color: string; description: string }[] = [
   { type: 'tundra', name: 'Tundratown', icon: Snowflake, color: 'text-tundra', description: 'The Freeze - Don\'t exit or the ice cracks' },
   { type: 'rainforest', name: 'Rainforest District', icon: TreePine, color: 'text-rainforest', description: 'The Gondola - Ride higher every 25 mins' },
