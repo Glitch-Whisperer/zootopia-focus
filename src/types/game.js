@@ -1,12 +1,12 @@
-export type CharacterType = 'fox' | 'bunny' | 'sloth';
+export const CHARACTER_TYPES = ['fox', 'bunny', 'sloth'];
 
-export type BiomeType = 'tundra' | 'rainforest' | 'sahara';
+export const BIOME_TYPES = ['tundra', 'rainforest', 'sahara'];
 
-export type GameMode = 'home' | 'citizen' | 'zpd' | 'hustle';
+export const GAME_MODES = ['home', 'citizen', 'zpd', 'hustle'];
 
-export type ZPDStage = 'clues' | 'chase' | 'arrest';
+export const ZPD_STAGES = ['clues', 'chase', 'arrest'];
 
-export type RankType = 'meter-maid' | 'officer' | 'detective' | 'chief';
+export const RANK_TYPES = ['meter-maid', 'officer', 'detective', 'chief'];
 
 export const RANK_LABELS = {
   'meter-maid': 'Meter Maid',
@@ -15,4 +15,4 @@ export const RANK_LABELS = {
   'chief': 'Chief',
 };
 
-export const RANK_ORDER[] = ['meter-maid', 'officer', 'detective', 'chief'];
+export const RANK_ORDER = ['meter-maid', 'officer', 'detective', 'chief'];

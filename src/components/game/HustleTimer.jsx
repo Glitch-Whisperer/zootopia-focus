@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 
 import { DollarSign, Home, Flame, Pause, Play, RotateCcw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '../ui/button';
 import { SessionAlert } from './SessionAlert';
 
 export function HustleTimer({ timer, onPause, onResume, onReset, onGoHome }) {

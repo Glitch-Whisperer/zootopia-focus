@@ -1,32 +1,32 @@
 import { useState } from 'react';
-import { X, Check, Lock, Sparkles, Home } from 'lucide-react';
+import { X, Check, Lock, Sparkles, Home, PawPrint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-
-const furnitureItems[] = [
+const furnitureItems = [
   // Tundratown Collection
-  { id: 'ice-lamp', name: 'Ice Crystal Lamp', cost: 200, biome: 'tundra', emoji: '💎', description: 'Glowing ice sculpture' },
-  { id: 'polar-rug', name: 'Polar Bear Rug', cost: 350, biome: 'tundra', emoji: '🐻‍❄️', description: 'Cozy faux fur rug' },
-  { id: 'snow-globe', name: 'Snow Globe', cost: 150, biome: 'tundra', emoji: '🔮', description: 'Mini Tundratown inside' },
+  { id: 'ice-lamp', name: 'Ice Crystal Lamp', cost: 200, biome: 'tundra', emoji: '💎', description: 'Glowing ice sculpture', position: { bottom: '20%', left: '15%' } },
+  { id: 'polar-rug', name: 'Polar Bear Rug', cost: 350, biome: 'tundra', emoji: '🐻‍❄️', description: 'Cozy faux fur rug', position: { bottom: '5%', left: '30%' } },
+  { id: 'snow-globe', name: 'Snow Globe', cost: 150, biome: 'tundra', emoji: '🔮', description: 'Mini Tundratown inside', position: { top: '30%', right: '10%' } },
   
   // Rainforest Collection
-  { id: 'vine-plant', name: 'Hanging Vines', cost: 180, biome: 'rainforest', emoji: '🌿', description: 'Lush tropical plants' },
-  { id: 'waterfall', name: 'Mini Waterfall', cost: 400, biome: 'rainforest', emoji: '💧', description: 'Soothing water feature' },
-  { id: 'parrot-perch', name: 'Parrot Perch', cost: 250, biome: 'rainforest', emoji: '🦜', description: 'Exotic bird stand' },
+  { id: 'vine-plant', name: 'Hanging Vines', cost: 180, biome: 'rainforest', emoji: '🌿', description: 'Lush tropical plants', position: { top: '15%', left: '20%' } },
+  { id: 'waterfall', name: 'Mini Waterfall', cost: 400, biome: 'rainforest', emoji: '💧', description: 'Soothing water feature', position: { bottom: '15%', right: '15%' } },
+  { id: 'parrot-perch', name: 'Parrot Perch', cost: 250, biome: 'rainforest', emoji: '🦜', description: 'Exotic bird stand', position: { top: '25%', left: '10%' } },
   
   // Sahara Collection
-  { id: 'cactus-lamp', name: 'Neon Cactus', cost: 220, biome: 'sahara', emoji: '🌵', description: 'Glowing desert plant' },
-  { id: 'sand-art', name: 'Sand Art Display', cost: 300, biome: 'sahara', emoji: '🏜️', description: 'Flowing sand sculpture' },
-  { id: 'camel-statue', name: 'Golden Camel', cost: 500, biome: 'sahara', emoji: '🐪', description: 'Luxurious decoration' },
+  { id: 'cactus-lamp', name: 'Neon Cactus', cost: 220, biome: 'sahara', emoji: '🌵', description: 'Glowing desert plant', position: { bottom: '25%', right: '25%' } },
+  { id: 'sand-art', name: 'Sand Art Display', cost: 300, biome: 'sahara', emoji: '🏜️', description: 'Flowing sand sculpture', position: { top: '40%', left: '5%' } },
+  { id: 'camel-statue', name: 'Golden Camel', cost: 500, biome: 'sahara', emoji: '🐪', description: 'Luxurious decoration', position: { bottom: '10%', left: '50%' } },
   
   // Premium Collection
-  { id: 'penthouse-key', name: 'Penthouse Key', cost: 2000, biome: 'tundra', emoji: '🗝️', description: 'Unlock luxury living' },
+  { id: 'penthouse-key', name: 'Penthouse Key', cost: 2000, biome: 'premium', emoji: '🗝️', description: 'Unlock luxury living', position: null },
 ];
 
-const biomeLabels: Record<BiomeType, { name: string; color: string }> = {
+const biomeLabels = {
   tundra: { name: 'Tundratown', color: 'text-tundra' },
   rainforest: { name: 'Rainforest', color: 'text-rainforest' },
   sahara: { name: 'Sahara', color: 'text-sahara' },
+  premium: { name: 'Premium', color: 'text-bucks' },
 };
 
 export function FurnitureShop({ isOpen, onClose, stats, onPurchase, ownedItems }) {
@@ -37,11 +37,11 @@ export function FurnitureShop({ isOpen, onClose, stats, onPurchase, ownedItems }
 
   const filteredItems = selectedBiome === 'all' 
     ? furnitureItems 
-    s.filter(item => item.biome === selectedBiome);
+    : furnitureItems.filter(item => item.biome === selectedBiome);
 
   const handlePurchase = (item) => {
     if (ownedItems.includes(item.id)) return;
-    if (stats.bucks < item.cost) return;
+    if (stats.pawpsicals < item.cost) return;
     
     const success = onPurchase(item);
     if (success) {
@@ -66,7 +66,8 @@ export function FurnitureShop({ isOpen, onClose, stats, onPurchase, ownedItems }
           </div>
           <div className="flex items-center gap-3">
             <div className="currency-badge currency-bucks">
-              <span className="text-lg">{stats.bucks}</span>
+              <PawPrint className="w-4 h-4" />
+              <span className="text-lg">{stats.pawpsicals}</span>
             </div>
             <button 
               onClick={onClose}
@@ -89,13 +90,13 @@ export function FurnitureShop({ isOpen, onClose, stats, onPurchase, ownedItems }
           >
             All Items
           </button>
-          {(['tundra', 'rainforest', 'sahara'] as BiomeType[]).map(biome => (
+          {(['tundra', 'rainforest', 'sahara', 'premium']).map(biome => (
             <button
               key={biome}
               onClick={() => setSelectedBiome(biome)}
               className={`px-4 py-2 rounded-full text-sm font-display transition-all whitespace-nowrap ${
                 selectedBiome === biome 
-                  ? `bg-${biome}/30 ${biomeLabels[biome].color}` 
+                  ? `bg-${biome === 'premium' ? 'bucks' : biome}/30 ${biomeLabels[biome].color}` 
                   : 'bg-muted/50 text-muted-foreground hover:bg-muted'
               }`}
             >
@@ -109,7 +110,7 @@ export function FurnitureShop({ isOpen, onClose, stats, onPurchase, ownedItems }
           <div className="grid grid-cols-2 gap-3">
             {filteredItems.map(item => {
               const owned = ownedItems.includes(item.id);
-              const canAfford = stats.bucks >= item.cost;
+              const canAfford = stats.pawpsicals >= item.cost;
               const isPurchasing = purchaseAnimation === item.id;
               
               return (
@@ -137,8 +138,13 @@ export function FurnitureShop({ isOpen, onClose, stats, onPurchase, ownedItems }
                   </div>
                   <div className="font-display text-sm text-foreground mb-1">{item.name}</div>
                   <div className="text-xs text-muted-foreground mb-2">{item.description}</div>
-                  <div className={`text-sm font-semibold ${owned ? 'text-primary' : canAfford ? 'text-bucks' : 'text-muted-foreground'}`}>
-                    {owned ? 'Owned' : `${item.cost} Bucks`}
+                  <div className={`text-sm font-semibold flex items-center gap-1 ${owned ? 'text-primary' : canAfford ? 'text-bucks' : 'text-muted-foreground'}`}>
+                    {owned ? 'Owned' : (
+                      <>
+                        <PawPrint className="w-3 h-3" />
+                        {item.cost}
+                      </>
+                    )}
                   </div>
                 </button>
               );
@@ -149,3 +155,5 @@ export function FurnitureShop({ isOpen, onClose, stats, onPurchase, ownedItems }
     </div>
   );
 }
+
+export { furnitureItems };

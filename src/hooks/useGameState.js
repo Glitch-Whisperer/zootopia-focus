@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { RANK_ORDER } from '@/types/game.js';
 
 const DEFAULT_STATS = {
-  bucks: 500,
+  pawpsicals: 500,
   rank: 'meter-maid',
   rankProgress: 0,
   apartmentLevel: 1,
@@ -19,7 +19,16 @@ const DEFAULT_TIMER = {
 export function useGameState() {
   const [stats, setStats] = useState(() => {
     const saved = localStorage.getItem('metrofocus-stats');
-    return saved ? JSON.parse(saved) : DEFAULT_STATS;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Migrate from bucks to pawpsicals if needed
+      if (parsed.bucks !== undefined && parsed.pawpsicals === undefined) {
+        parsed.pawpsicals = parsed.bucks;
+        delete parsed.bucks;
+      }
+      return parsed;
+    }
+    return DEFAULT_STATS;
   });
 
   const [ownedFurniture, setOwnedFurniture] = useState(() => {
@@ -69,8 +78,8 @@ export function useGameState() {
       };
 
       if (timerState.mode === 'citizen') {
-        // Citizen mode rewards Bucks
-        newStats.bucks += minutesCompleted * 10;
+        // Citizen mode rewards Pawpsicals
+        newStats.pawpsicals += minutesCompleted * 10;
       } else if (timerState.mode === 'zpd') {
         // ZPD mode rewards Rank progress
         const newProgress = prev.rankProgress + 25;
@@ -87,7 +96,7 @@ export function useGameState() {
         }
       } else if (timerState.mode === 'hustle') {
         // Hustle mode doubles bet
-        newStats.bucks += 500;
+        newStats.pawpsicals += 500;
       }
 
       return newStats;
@@ -110,8 +119,8 @@ export function useGameState() {
     setCurrentMode('zpd');
     setTimer({
       isActive: true,
-      timeRemaining: 25 * 60, // First stage: 25 mins
-      totalTime: 25 * 60,
+      timeRemaining: 5 * 60, // First stage: 25 mins
+      totalTime: 5 * 60,
       mode: 'zpd',
       zpdStage: 'clues',
     });
@@ -120,15 +129,15 @@ export function useGameState() {
 
   const advanceZPDStage = useCallback(() => {
     setTimer(prev => {
-      const stages[] = ['clues', 'chase', 'arrest'];
+      const stages = ['clues', 'chase', 'arrest'];
       const currentIndex = stages.indexOf(prev.zpdStage || 'clues');
       
       if (currentIndex < stages.length - 1) {
         return {
           ...prev,
           isActive: true,
-          timeRemaining: 25 * 60,
-          totalTime: 25 * 60,
+          timeRemaining: 5 * 60,
+          totalTime: 5 * 60,
           zpdStage: stages[currentIndex + 1],
         };
       }
@@ -137,9 +146,9 @@ export function useGameState() {
   }, []);
 
   const startHustleMode = useCallback(() => {
-    if (stats.bucks < 500) return false;
+    if (stats.pawpsicals < 500) return false;
     
-    setStats(prev => ({ ...prev, bucks: prev.bucks - 500 }));
+    setStats(prev => ({ ...prev, pawpsicals: prev.pawpsicals - 500 }));
     setCurrentMode('hustle');
     setTimer({
       isActive: true,
@@ -149,7 +158,7 @@ export function useGameState() {
     });
     setShowPhone(false);
     return true;
-  }, [stats.bucks]);
+  }, [stats.pawpsicals]);
 
   const pauseTimer = useCallback(() => {
     setTimer(prev => ({ ...prev, isActive: false }));
@@ -169,7 +178,7 @@ export function useGameState() {
 
   const abandonSession = useCallback(() => {
     if (timer.mode === 'hustle') {
-      // Lose all bet Bucks (already deducted)
+      // Lose all bet Pawpsicals (already deducted)
     }
     setTimer(DEFAULT_TIMER);
     setCurrentMode('home');
@@ -180,21 +189,21 @@ export function useGameState() {
     setCurrentMode('home');
   }, []);
 
-  const earnBucks = useCallback((amount) => {
-    setStats(prev => ({ ...prev, bucks: prev.bucks + amount }));
+  const earnPawpsicals = useCallback((amount) => {
+    setStats(prev => ({ ...prev, pawpsicals: prev.pawpsicals + amount }));
   }, []);
 
-  const spendBucks = useCallback((amount) => {
-    if (stats.bucks >= amount) {
-      setStats(prev => ({ ...prev, bucks: prev.bucks - amount }));
+  const spendPawpsicals = useCallback((amount) => {
+    if (stats.pawpsicals >= amount) {
+      setStats(prev => ({ ...prev, pawpsicals: prev.pawpsicals - amount }));
       return true;
     }
     return false;
-  }, [stats.bucks]);
+  }, [stats.pawpsicals]);
 
   const purchaseFurniture = useCallback((item) => {
-    if (stats.bucks >= item.cost && !ownedFurniture.includes(item.id)) {
-      setStats(prev => ({ ...prev, bucks: prev.bucks - item.cost }));
+    if (stats.pawpsicals >= item.cost && !ownedFurniture.includes(item.id)) {
+      setStats(prev => ({ ...prev, pawpsicals: prev.pawpsicals - item.cost }));
       setOwnedFurniture(prev => [...prev, item.id]);
       
       // Check for apartment upgrade
@@ -204,7 +213,7 @@ export function useGameState() {
       return true;
     }
     return false;
-  }, [stats.bucks, ownedFurniture]);
+  }, [stats.pawpsicals, ownedFurniture]);
 
   return {
     stats,
@@ -222,8 +231,8 @@ export function useGameState() {
     resetTimer,
     abandonSession,
     goHome,
-    earnBucks,
-    spendBucks,
+    earnPawpsicals,
+    spendPawpsicals,
     purchaseFurniture,
   };
 }

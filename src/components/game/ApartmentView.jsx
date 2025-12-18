@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { CharacterAvatar } from './CharacterAvatar';
 import { CurrencyDisplay } from './CurrencyDisplay';
+import { furnitureItems } from './FurnitureShop';
+import { RANK_LABELS } from '@/types/game.js';
 
 import { Smartphone, Clock, TrendingUp, Star } from 'lucide-react';
 import apartmentBg from '@/assets/apartment-bg.png';
@@ -13,7 +15,7 @@ const apartmentLevels = [
   { name: 'Penthouse Suite', description: 'The pinnacle', stars: 5 },
 ];
 
-export function ApartmentView({ stats, character, onOpenPhone }) {
+export function ApartmentView({ stats, character, ownedFurniture = [], onOpenPhone }) {
   const apartment = apartmentLevels[stats.apartmentLevel - 1] || apartmentLevels[0];
   const [isPhoneAnimating, setIsPhoneAnimating] = useState(false);
   const characterRef = useRef(null);
@@ -26,6 +28,11 @@ export function ApartmentView({ stats, character, onOpenPhone }) {
       setIsPhoneAnimating(false);
     }, 400);
   };
+
+  // Get owned furniture items with positions
+  const ownedFurnitureItems = furnitureItems.filter(
+    item => ownedFurniture.includes(item.id) && item.position
+  );
   
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
@@ -43,6 +50,36 @@ export function ApartmentView({ stats, character, onOpenPhone }) {
         <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-accent/10 blur-[100px] rounded-full animate-pulse" />
         <div className="absolute bottom-1/3 left-1/3 w-48 h-48 bg-primary/10 blur-[80px] rounded-full animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
+
+      {/* Furniture Decorations */}
+      {ownedFurnitureItems.map((item) => (
+        <div
+          key={item.id}
+          className="absolute z-10 animate-fade-in transition-all duration-500 hover:scale-110"
+          style={{
+            ...item.position,
+            filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))',
+          }}
+        >
+          <div className="relative group">
+            <span className="text-4xl md:text-5xl block animate-float" style={{ animationDelay: `${Math.random() * 2}s` }}>
+              {item.emoji}
+            </span>
+            {/* Glow effect under furniture */}
+            <div className={`absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 h-2 rounded-full blur-sm opacity-60 ${
+              item.biome === 'tundra' ? 'bg-tundra' :
+              item.biome === 'rainforest' ? 'bg-rainforest' :
+              item.biome === 'sahara' ? 'bg-sahara' : 'bg-bucks'
+            }`} />
+            {/* Tooltip */}
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <span className="text-xs bg-card/90 px-2 py-1 rounded whitespace-nowrap font-display">
+                {item.name}
+              </span>
+            </div>
+          </div>
+        </div>
+      ))}
 
       {/* Header */}
       <header className="relative z-10 p-6 flex items-center justify-between">

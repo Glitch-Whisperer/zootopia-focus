@@ -4,7 +4,7 @@ import { Map, Radio, Wallet, X, Snowflake, TreePine, Sun, Target, Clock, Shoppin
 import { Button } from '@/components/ui/button';
 import phoneDevice from '@/assets/phone-device.png';
 
-const biomeData: { type; name: string; icon: typeof Snowflake; color: string; description: string }[] = [
+const biomeData = [
   { type: 'tundra', name: 'Tundratown', icon: Snowflake, color: 'text-tundra', description: 'The Freeze - Don\'t exit or the ice cracks' },
   { type: 'rainforest', name: 'Rainforest District', icon: TreePine, color: 'text-rainforest', description: 'The Gondola - Ride higher every 25 mins' },
   { type: 'sahara', name: 'Sahara Square', icon: Sun, color: 'text-sahara', description: 'The Heat - Finish before it bursts' },
@@ -221,15 +221,15 @@ export function PhoneMenu({ isOpen, onClose, onStartCitizen, onStartZPD, onStart
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2 p-2 rounded-lg bg-tundra/10">
             <div className="w-3 h-3 rounded-full bg-tundra" />
-            <span className="text-tundra">Stage 1: Gather Clues (25 min)</span>
+            <span className="text-tundra">Stage 1: Gather Clues (5 min)</span>
           </div>
           <div className="flex items-center gap-2 p-2 rounded-lg bg-rainforest/10">
             <div className="w-3 h-3 rounded-full bg-rainforest" />
-            <span className="text-rainforest">Stage 2: The Chase (25 min)</span>
+            <span className="text-rainforest">Stage 2: The Chase (5 min)</span>
           </div>
           <div className="flex items-center gap-2 p-2 rounded-lg bg-sahara/10">
             <div className="w-3 h-3 rounded-full bg-sahara" />
-            <span className="text-sahara">Stage 3: The Arrest (25 min)</span>
+            <span className="text-sahara">Stage 3: The Arrest (5 min)</span>
           </div>
         </div>
 

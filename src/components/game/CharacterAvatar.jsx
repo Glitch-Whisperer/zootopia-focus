@@ -1,4 +1,3 @@
-
 import foxImage from '@/assets/character-fox.png';
 import bunnyImage from '@/assets/character-bunny.png';
 import slothImage from '@/assets/character-sloth.png';
@@ -25,21 +24,20 @@ const sizeClasses = {
 export function CharacterAvatar({ character, size = 'md', className = '', animate = true }) {
   return (
     <div className={`relative ${className}`}>
-      {/* Character glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-t from-accent/30 via-primary/20 to-transparent blur-3xl rounded-full scale-110" />
+      {/* 3D Character glow effect */}
+      <div className="absolute inset-0 bg-gradient-to-t from-primary/30 via-accent/20 to-transparent blur-3xl rounded-full scale-125" />
       
-      {/* Character image with background removal */}
+      {/* Ground shadow for 3D depth */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-6 bg-foreground/20 blur-xl rounded-full" />
+      
+      {/* Character image with transparent background */}
       <div className={`relative ${animate ? 'animate-character-idle' : ''}`}>
         <img 
           src={characterImages[character]} 
           alt={characterNames[character]}
-          className={`${sizeClasses[size]} object-contain`}
+          className={`${sizeClasses[size]} object-contain relative z-10`}
           style={{ 
-            filter: 'drop-shadow(0 10px 40px rgba(0,0,0,0.6))',
-            mixBlendMode: 'normal',
-            // Remove white background
-            WebkitMaskImage: 'linear-gradient(to bottom, black, black)',
-            maskImage: 'linear-gradient(to bottom, black, black)',
+            filter: 'drop-shadow(0 15px 50px rgba(0,0,0,0.7)) drop-shadow(0 0 40px hsl(var(--primary) / 0.2))',
           }}
         />
       </div>

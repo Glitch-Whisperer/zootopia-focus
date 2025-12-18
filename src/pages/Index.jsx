@@ -1,100 +1,129 @@
-import { useState, useCallback } from 'react';
-import { useGameState } from '@/hooks/useGameState';
-import { ApartmentView } from '@/components/game/ApartmentView';
-import { PhoneMenu } from '@/components/game/PhoneMenu';
-import { BiomeTimer } from '@/components/game/BiomeTimer';
-import { ZPDTimer } from '@/components/game/ZPDTimer';
-import { HustleTimer } from '@/components/game/HustleTimer';
-import { TrainTransition } from '@/components/game/TrainTransition';
-import { FurnitureShop } from '@/components/game/FurnitureShop';
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useGameState } from "@/hooks/useGameState";
 
+// Pages / Components
+import { LandingPage } from "@/pages/LandingPage";
+import { RegionSelection } from "@/components/game/RegionSelection";
+import { BiomeTimer } from "@/components/game/BiomeTimer";
+import { ZPDTimer } from "@/components/game/ZPDTimer";
+import { HustleTimer } from "@/components/game/HustleTimer";
+import { TrainTransition } from "@/components/game/TrainTransition";
 
 const Index = () => {
-  const [character] = useState('fox');
+  const navigate = useNavigate();
+
+  // --- USER STATE ---
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem("metrofocus-user");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [activeRegion, setActiveRegion] = useState(
+    () => localStorage.getItem("metrofocus-region") || null
+  );
+
+  const [isLoading, setIsLoading] = useState(
+    () => !!localStorage.getItem("metrofocus-region")
+  );
+
   const [showTrainTransition, setShowTrainTransition] = useState(false);
-  const [trainDestination, setTrainDestination] = useState('home');
-  const [pendingCitizenMode, setPendingCitizenMode] = useState(null);
-  const [showShop, setShowShop] = useState(false);
-  
+  const [trainDestination, setTrainDestination] = useState("home");
+
+  const hasRestoredSession = useRef(false);
+
+  // --- GAME STATE ---
   const {
-    stats,
     timer,
     currentMode,
-    showPhone,
-    ownedFurniture,
-    setShowPhone,
     startCitizenMode,
     startZPDMode,
-    advanceZPDStage,
     startHustleMode,
     pauseTimer,
     resumeTimer,
     resetTimer,
     goHome,
-    purchaseFurniture,
+    advanceZPDStage,
   } = useGameState();
 
-  // Handle citizen mode with train transition
-  const handleStartCitizen = useCallback((biome, minutes) => {
-    setShowPhone(false);
-    setPendingCitizenMode({ biome, minutes });
-    setTrainDestination(biome);
-    setShowTrainTransition(true);
-  }, [setShowPhone]);
-
-  // Handle train transition complete
-  const handleTrainComplete = useCallback(() => {
-    setShowTrainTransition(false);
-    if (pendingCitizenMode) {
-      startCitizenMode(pendingCitizenMode.biome, pendingCitizenMode.minutes);
-      setPendingCitizenMode(null);
+  // --- RESTORE SESSION ---
+  useEffect(() => {
+    if (activeRegion && !hasRestoredSession.current) {
+      startCitizenMode(activeRegion, 25);
+      hasRestoredSession.current = true;
+      setTimeout(() => setIsLoading(false), 50);
+    } else if (!activeRegion) {
+      setIsLoading(false);
     }
-  }, [pendingCitizenMode, startCitizenMode]);
+  }, [activeRegion, startCitizenMode]);
 
-  // Handle going home with train transition
-  const handleGoHome = useCallback(() => {
-    setTrainDestination('home');
+  // --- HANDLERS ---
+  const handleAuthSuccess = (userData) => {
+    setUser(userData);
+    localStorage.setItem("metrofocus-user", JSON.stringify(userData));
+    setActiveRegion(null);
+    localStorage.removeItem("metrofocus-region");
+  };
+
+  const handleRegionSelect = useCallback((regionId) => {
+    setActiveRegion(regionId);
+    localStorage.setItem("metrofocus-region", regionId);
+    setTrainDestination(regionId);
     setShowTrainTransition(true);
   }, []);
 
-  const handleTrainHomeComplete = useCallback(() => {
+  const handleTrainComplete = useCallback(() => {
     setShowTrainTransition(false);
+    if (activeRegion) startCitizenMode(activeRegion, 25);
+  }, [activeRegion, startCitizenMode]);
+
+  const handleGoHome = useCallback(() => {
+    setActiveRegion(null);
+    localStorage.removeItem("metrofocus-region");
+    hasRestoredSession.current = false;
     goHome();
   }, [goHome]);
 
-  const handleOpenShop = useCallback(() => {
-    setShowPhone(false);
-    setShowShop(true);
-  }, [setShowPhone]);
+  const handleOpenProfile = useCallback(() => {
+    navigate("/profile");
+  }, [navigate]);
 
-  // Train transition overlay
+  // --- VIEW LOGIC ---
+  if (!user) {
+    return <LandingPage onAuthSuccess={handleAuthSuccess} />;
+  }
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-black" />;
+  }
+
+  if (!activeRegion) {
+    return (
+      <RegionSelection
+        userStats={{
+          totalFocusMinutes: timer.totalFocusMinutes ?? 0,
+          currentStreak: timer.currentStreak ?? 0,
+        }}
+        onSelect={handleRegionSelect}
+        onOpenProfile={handleOpenProfile}
+      />
+    );
+  }
+
   if (showTrainTransition) {
     return (
-      <TrainTransition 
-        isVisible={showTrainTransition}
+      <TrainTransition
+        isVisible
         destination={trainDestination}
-        onComplete={trainDestination === 'home' ? handleTrainHomeComplete : handleTrainComplete}
+        onComplete={handleTrainComplete}
       />
     );
   }
 
-  // Render based on current mode
-  if (currentMode === 'citizen' && (timer.isActive || timer.timeRemaining > 0 || timer.timeRemaining === 0)) {
+  if (currentMode === "zpd") {
     return (
-      <BiomeTimer 
-        timer={timer} 
-        onPause={pauseTimer}
-        onResume={resumeTimer}
-        onReset={resetTimer}
-        onGoHome={handleGoHome}
-      />
-    );
-  }
-
-  if (currentMode === 'zpd' && (timer.isActive || timer.timeRemaining >= 0)) {
-    return (
-      <ZPDTimer 
-        timer={timer} 
+      <ZPDTimer
+        timer={timer}
         onPause={pauseTimer}
         onResume={resumeTimer}
         onReset={resetTimer}
@@ -104,10 +133,10 @@ const Index = () => {
     );
   }
 
-  if (currentMode === 'hustle' && (timer.isActive || timer.timeRemaining >= 0)) {
+  if (currentMode === "hustle") {
     return (
-      <HustleTimer 
-        timer={timer} 
+      <HustleTimer
+        timer={timer}
         onPause={pauseTimer}
         onResume={resumeTimer}
         onReset={resetTimer}
@@ -116,31 +145,15 @@ const Index = () => {
     );
   }
 
-  // Default: Home/Apartment view
   return (
-    <>
-      <ApartmentView 
-        stats={stats} 
-        character={character}
-        onOpenPhone={() => setShowPhone(true)}
-      />
-      <PhoneMenu 
-        isOpen={showPhone}
-        onClose={() => setShowPhone(false)}
-        onStartCitizen={handleStartCitizen}
-        onStartZPD={startZPDMode}
-        onStartHustle={startHustleMode}
-        onOpenShop={handleOpenShop}
-        stats={stats}
-      />
-      <FurnitureShop
-        isOpen={showShop}
-        onClose={() => setShowShop(false)}
-        stats={stats}
-        onPurchase={purchaseFurniture}
-        ownedItems={ownedFurniture}
-      />
-    </>
+    <BiomeTimer
+      key={activeRegion}
+      timer={timer}
+      onPause={pauseTimer}
+      onResume={resumeTimer}
+      onReset={resetTimer}
+      onGoHome={handleGoHome}
+    />
   );
 };
 
